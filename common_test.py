@@ -140,6 +140,43 @@ class FilteredJavaFileTest(unittest.TestCase):
             self.assertEqual(license[i], f.contents[i])
         self.assertEqual(first_line, f.contents[3])
 
+    def test_is_multi_line_comment_start(self):
+        f = FilteredJavaFile(os.path.join('sample', 'VersionInfoBeanLicensed.java'))
+
+        self.assertTrue(f.is_multi_line_comment_start('/*'))
+        self.assertTrue(f.is_multi_line_comment_start(' /*'))
+        self.assertTrue(f.is_multi_line_comment_start('\t/*'))
+        self.assertTrue(f.is_multi_line_comment_start('/* something else...'))
+        
+        self.assertFalse(f.is_multi_line_comment_start('\r\n'))
+        self.assertFalse(f.is_multi_line_comment_start('\n'))
+        self.assertFalse(f.is_multi_line_comment_start('\t\r\n'))
+        self.assertFalse(f.is_multi_line_comment_start('\t\n'))
+
+        self.assertFalse(f.is_multi_line_comment_start('package'))
+        self.assertFalse(f.is_multi_line_comment_start(' package'))
+        self.assertFalse(f.is_multi_line_comment_start('\tpackage'))
+
+        self.assertFalse(f.is_multi_line_comment_start('/* */'))
+        self.assertFalse(f.is_multi_line_comment_start('*/'))
+        
+        # Doxygen
+        self.assertFalse(f.is_multi_line_comment_start('/**'))
+        self.assertFalse(f.is_multi_line_comment_start(' /**'))
+        self.assertFalse(f.is_multi_line_comment_start('\t/**'))
+        self.assertFalse(f.is_multi_line_comment_start('/*!'))
+        self.assertFalse(f.is_multi_line_comment_start(' /*!'))
+        self.assertFalse(f.is_multi_line_comment_start('\t/*!'))
+
+    def test_load_doxygen(self):
+        f = FilteredJavaFile(os.path.join('sample', 'VersionInfoBeanDoxygen1.java'))
+        f.load()
+        self.assertEqual('/** Doxygen block', f.contents[0].strip())
+
+        f = FilteredJavaFile(os.path.join('sample', 'VersionInfoBeanDoxygen2.java'))
+        f.load()
+        self.assertEqual('/*! Doxygen block', f.contents[0].strip())
+
 if __name__ == '__main__':
     unittest.main()
 

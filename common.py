@@ -74,11 +74,24 @@ class FilteredJavaFile(FilteredTextFile):
     def start_load(self):
          self._state = FilteredJavaFile.ST_START
 
+    def is_multi_line_comment_start(self, line):
+        line = line.strip()
+        if line.find('*/') != -1:
+            # The block starts and ends in the same line
+            return False
+        elif line.startswith('/**') or line.startswith('/*!'):
+            # Doxygen block
+            return False
+        elif line.startswith('/*'):
+            return True
+        else:
+            return False
+
     def filter_line(self, line):
         if self._state == FilteredJavaFile.ST_INSIDE_CODE:
             return line
         elif self._state == FilteredJavaFile.ST_START:
-            if line.strip().startswith('/*') and (line.find('*/') == -1):
+            if self.is_multi_line_comment_start(line):
                 self._state = FilteredJavaFile.ST_INITIAL_COMMENT
                 return None
             else:
